@@ -35,10 +35,29 @@ class Font_Manager
 
         struct bitmap
         {
-                Raster raster;
-                uint16_t bitwidth;
-                uint8_t bitheight;
-                uint8_t ** scan;
+                Raster raster { TBLR };
+                uint16_t bitwidth { 0 };
+                uint8_t bitheight { 0 };
+                uint8_t ** scan { nullptr };
+                uint16_t scanwidth { 0 };
+                uint16_t scanheight { 0 };
+                uint16_t xpoint { 0 };      // Current point to place scan data
+
+                void init()
+                {
+                    switch ( raster )
+                    {
+                        case LRTB:
+                            scanwidth = ( ( bitwidth - 1 ) / 8 ) + 1;
+                            scanheight = bitheight;
+                            break;
+                        default:
+                            scanwidth = bitwidth;
+                            scanheight = ( ( bitheight - 1 ) / 8 ) + 1;
+                            break;
+                    }
+                    scan = new uint8_t [ scanwidth ] [ scanheight ];
+                }
         };
 
         Font_Manager( uint8_t fontindex, Raster raster );
@@ -71,9 +90,18 @@ class Font_Manager
          * @param str String to bitmap
          * @return Bitmap of the string
          */
-        virtual bitmap map_string( std::string str );
+        virtual bitmap rasterize( std::string str );
+
+        /**
+         *
+         * @param c
+         * @return
+         */
+        virtual bitmap rasterize( unsigned char c );
 
     private:
+
+        bitmap raster( unsigned char c, bitmap& scan );
 
         const font_info_t* m_font;    /// < Current font
         Raster m_raster;

@@ -1614,7 +1614,7 @@ const font_char_desc_t _fonts_roboto_10pt_descriptors [] = { { 1, 0 }, 		// !
         };
 
 // Font information for Roboto 10pt
-const font_info_t _fonts_roboto_10pt_info = { .height = 14,                              //  Character height
+const font_info_t _fonts_roboto_10pt_info = { .name = "roboto_10pt", .height = 14,                  //  Character height
         .c = '!',                            //  Start character
         .char_start = '~',                            //  End character
         .char_end = 2,                              //  Width, in pixels, of space character

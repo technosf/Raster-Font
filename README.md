@@ -35,13 +35,13 @@ The library contain two parts - the font manager and the codified fonts. The fon
 
 The font manager contains a fixed index of the available fonts and retrieves the character data for a particular font by calling a routing in that font header. The font amanager can then transform the _L-R/T-B_ rasterization of the charater to someother rasterization as needed: In the case of my [SSD1306 driver](https://github.com/technosf/ESP32-SSD1306-Driver), it wants _T-B/L-R_ rasterized fonts to allow the SSD1306 paged memory to be written to more effectively as it's also organized _T-B/L-R_.
 
-This is not a _dynamic_ library, in that it doesn't read the available fonts and index them automagically - to make a font available it has to be scanned, codified and coded into the index.
+This is not a _dynamic_ library, in that it doesn't read the available fonts and index them automagically - to make a font available it has to be scanned, codified and coded into the index. One point to note is that some of the fonts processed for Baoshi's code have character indexes that are 1-out because of C arrays are index from _zero_ and the first non-null character is _one_: The fist *font_char_desc_t* entries should be a dummy to compensate to allow a direct character-number to character-representation mapping.
   
 
 ## Future Features
 
 Thinking about what could be added:
-* LRU Character cache
+* LRU Character cache for TBLR fonts
 
 ##  Versions
 

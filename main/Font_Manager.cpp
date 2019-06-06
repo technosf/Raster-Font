@@ -24,6 +24,11 @@ Font_Manager::Font_Manager( uint8_t fontindex, Raster raster )
     m_raster = raster;
 }
 
+const char* Font_Manager::font_name()
+{
+    return ( m_font->name );
+}
+
 uint8_t Font_Manager::font_height()
 {
     return ( m_font->height );
@@ -56,11 +61,7 @@ uint16_t Font_Manager::measure_string( std::string str )
 
 Font_Manager::bitmap Font_Manager::rasterize( std::string str )
 {
-    bitmap scan;
-    scan.raster = m_raster;
-    scan.bitheight = m_font->height - 1;
-    scan.bitwidth = measure_string( str );
-    scan.init();
+    bitmap scan( m_raster, measure_string( str ), m_font->height );
 
     for ( char& c : str )
     {
@@ -72,78 +73,75 @@ Font_Manager::bitmap Font_Manager::rasterize( std::string str )
 
 Font_Manager::bitmap Font_Manager::rasterize( unsigned char c )
 {
-    bitmap scan;
-    scan.raster = m_raster;
-    scan.bitheight = m_font->height;
-    scan.bitwidth = m_font->char_descriptors [ c ].width;
-    scan.init();
+    if ( ( c < m_font->char_start ) || ( c > m_font->char_end ) ) c = ' ';
+
+    printf( "Char:0x%02x  Offset:0x%04x\n", c, m_font->char_descriptors [ c ].offset );
+    bitmap scan( m_raster, m_font->char_descriptors [ c ].width, m_font->height );
     raster( c, scan );
     return scan;
 }
 
-Font_Manager::bitmap Font_Manager::raster( unsigned char c, bitmap& scan )
+//integrate()
+
+void Font_Manager::raster( unsigned char c, bitmap& bm )
 {
+    //  uint8_t fontsegments [ m_font->char_descriptors [ c ].width ] [ 1 + page_end - page_start ] = {};    // Col|Page L-R, T-B, fill with background
 
-    // ESP_LOGI( TAG, "\tchar:\"%c\" X:%d  Y:%d\n", c, x, y );
-
-    // Calculate the page split for the character
-    uint8_t page_start = y / 8;
-    uint8_t page_end = ( y + m_font->height ) / 8;
-    uint8_t fontsegments [ m_font->char_descriptors [ c ].width ] [ 1 + page_end - page_start ] = {};    // Col|Page L-R, T-B, fill with background
-
-    const uint8_t * bitmap = m_font->bitmap + m_font->char_descriptors [ c ].offset;
-    uint8_t scan_length = 1 + ( m_font->char_descriptors [ c ].width / 8 );
-    uint8_t scan;
-
-    for ( uint8_t scan_line = 0; scan_line < m_font->height; scan_line++ )
-    /*
-     * Scan the char line by line, T-B
-     */
+    //   if ( ( c < m_font->char_start ) || ( c > m_font->char_end ) ) c = ' ';
+    font_char_desc_t char_desc = m_font->char_descriptors [ c ];
+    const uint8_t * bitmap = m_font->bitmap + char_desc.offset;                   // Pointer to L-R bitmap
+    uint8_t horizontal_read_bytes = 1 + ( char_desc.width / 8 );            // Bytes to read for horizontal
+    uint8_t* data;                                      // Data byte placement
+    uint8_t shift = bm.xpoint % 8;                      // Number of bits to shift right on placement
+    for ( uint8_t line = 0; line < m_font->height; line++ )
     {
-        uint8_t page = page_start + ( scan_line + y ) / 8;
-        uint8_t vertical_shift = ( scan_line + y ) % 8;
+        data = bm.data + ( ( bm.width * ( line / 8 ) ) + bm.xpoint / 8 );    // address plus lines plus offset
+        printf( "\nLine:%d  Chunks:%d  FMDx:%p  Offset:0x%02x Char:0x%02x\n", line, horizontal_read_bytes, data,
+                ( ( bm.width * ( line / 8 ) ) + bm.xpoint / 8 ), char_desc.offset );
 
-        printf( "Shift y:%d Line %d, Pages %d %d  Vertical %d  \n", y, scan_line, page_start, page, vertical_shift );
-
-        for ( uint8_t scan_byte = 0; scan_byte < scan_length; scan_byte++ )
+        for ( uint8_t chunk = 0; chunk < horizontal_read_bytes; chunk++ )
         /*
-         * Loop through bytes in a scan line
+         *  Read a horizontal slice of the current character, place it in the scan
          */
         {
-            scan = * ( bitmap + ( scan_line * scan_length ) + scan_byte );    // Horizontal scan line
-
-            printf( "VShift %d  Char loc 0x%04x  byte 0x%02x\n", vertical_shift,
-                    ( scan_line * scan_length ) + scan_byte, scan );
-
-            for ( uint8_t col = 8 * scan_byte; col < m_font->char_descriptors [ c ].width; col++ )
-            /*
-             * Pick out the bits and OR them into the segment
-             */
+            uint8_t word = *bitmap++;    // Read the next byte
+            printf( " -> 1Byte:0x%02x\n", word );
+            switch ( bm.raster )
             {
-                uint8_t bit = col % 8;
+                case LRTB:
+                    /*
+                     * Process the byte into the current location, across byte boundaries if needed
+                     */
+                    *data++ |= ( word >> shift );                   // Font char MSBs shifted to end of destination byte
+                    if ( shift ) *data |= ( word << ( 8 - shift ) );    // Font char LSB shifted to start of next destination byte
+                    break;
 
-                if ( ( bit == 0 ) && ( col > 0 ) ) break;    // Byte boundary, breakout to incr scan byte
+                case TBLR:
+                    /*
+                     * Process the bits, each going into a different vertical segment in the same bit position
+                     */
+                    uint8_t bitposition = line % 8;     // Vertical in the byte, little endian
+                    for ( uint8_t seg = ( 8 * chunk );
+                            seg < std::min( static_cast< uint8_t >( chunk + 8 ), char_desc.width ); seg++ )
+                    /*
+                     * Process bits in this horizontal byte, Font is Big-Endian, Segment is Little-Endian
+                     */
+                    {
+                        if ( word & MSBITS [ seg ] )    // Font bit is set in this position
+                        {
+                            uint8_t col = seg + ( chunk * bm.width );
+                            printf( "Line:0x%02x  Seg:0x%02x  Chunk:0x%02x  Col:0x%02x  BP:0x%02x  Data:0x%02x  ", line,
+                                    seg, chunk, col, bitposition, * ( data + col ) );
 
-                bool scanbit = scan & ( 0x80 >> bit );    // Font scans are L-R MSB->LSB, so mask the bit L-R
+                            * ( data + col )    // data segs along and chunk down
+                            |= ( 1 << bitposition );    // Set bit at bitposition
+                            printf( "DataX:%02x  P:%p\n", * ( data + col ), data + col );
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+    bm.xpoint += char_desc.width + m_font->c;    // Increment pointer to next char
+}
 
-//              printf( "Col %d  Scan bit 0x%02x  Shifted Scan bit 0x%02x  old Segs 0x%02x ", col, scanbit,
-//                      scanbit << vertical_shift, fontsegments [ col ] [ page ] );
-
-                fontsegments [ col ] [ page ] |= ( scanbit << vertical_shift );    // Segment bit-or with scan, shifting it down
-
-            }    // for bits
-                 //printf( " New Segs 0x%02x\n", fontsegments [ col ] [ page ] );
-        }    // for horizontal bytes
-    }    // for horizontal lines
-
-    // Push out the remapped character
-    for ( uint8_t page = page_start; page <= page_end; page++ )
-    {
-        for ( uint8_t col = 0; col < m_font->char_descriptors [ c ].width; col++ )
-        {
-            m_ssd1306.segment( page, x + col, fontsegments [ col ] [ page ], foreground );
-        }    // for
-    }    // for
-
-    return scan;
-}    // draw_char

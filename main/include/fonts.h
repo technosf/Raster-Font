@@ -36,10 +36,11 @@ typedef struct _font_char_desc
 //! @brief Font information
 typedef struct _font_info
 {
+        const char * name;      //!< Name of the font
         uint8_t height;         //!< Character height in pixel, all characters have same height
         uint8_t c;              //!< Simulation of "C" width in TrueType term, the space between adjacent characters
-        char char_start;        //!< First character
-        char char_end;          //!< Last character
+        unsigned char char_start;        //!< First character
+        unsigned char char_end;          //!< Last character
         const font_char_desc_t* char_descriptors;    //! descriptor for each character
         const uint8_t *bitmap;    //!< Character bitmap
 } font_info_t;

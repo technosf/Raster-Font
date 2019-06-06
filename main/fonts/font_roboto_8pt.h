@@ -1332,7 +1332,7 @@ const font_char_desc_t _fonts_roboto_8pt_descriptors [] = { { 1, 0 }, 		// !
         };
 
 // Font information for Roboto 8pt
-const font_info_t _fonts_roboto_8pt_info = { .height = 11,                            //  Character height
+const font_info_t _fonts_roboto_8pt_info = { .name = "roboto_8pt", .height = 11,                    //  Character height
         .c = '!',                           //  Start character
         .char_start = '~',                           //  End character
         .char_end = 2,                             //  Width, in pixels, of space character

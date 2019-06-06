@@ -20,6 +20,8 @@
 #define INCLUDE_FONT_MANAGER_H_
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <algorithm>
 #include <string>
 
 #include "fonts.h"
@@ -35,28 +37,38 @@ class Font_Manager
 
         struct bitmap
         {
-                Raster raster { TBLR };
-                uint16_t bitwidth { 0 };
-                uint8_t bitheight { 0 };
-                uint8_t ** scan { nullptr };
-                uint16_t scanwidth { 0 };
-                uint16_t scanheight { 0 };
-                uint16_t xpoint { 0 };      // Current point to place scan data
+                const Raster raster;
+                const uint16_t bitwidth;    // bits
+                const uint8_t bitheight;    // bits
+                uint16_t width { 0 };       // bytes needed
+                uint16_t height { 0 };      // bytes needed
+                uint8_t * data { nullptr };
+                uint16_t xpoint { 0 };      // Current bit-point to place scan data
 
-                void init()
+                bitmap( Raster r, uint16_t w, uint8_t h ) :
+                        raster { r }, bitwidth { w }, bitheight { h }
                 {
                     switch ( raster )
+                    /*
+                     * Calc width, height in Bytes
+                     */
                     {
                         case LRTB:
-                            scanwidth = ( ( bitwidth - 1 ) / 8 ) + 1;
-                            scanheight = bitheight;
+                            width = ( ( bitwidth - 1 ) / 8 ) + 1;
+                            height = bitheight;
                             break;
-                        default:
-                            scanwidth = bitwidth;
-                            scanheight = ( ( bitheight - 1 ) / 8 ) + 1;
+                        case TBLR:
+                            width = bitwidth;
+                            height = ( ( bitheight - 1 ) / 8 ) + 1;
                             break;
                     }
-                    scan = new uint8_t [ scanwidth ] [ scanheight ];
+                    data = (uint8_t*) malloc( width * height );
+                    printf( "FMD:%p\n", data );
+                }
+
+                ~bitmap()
+                {
+                    delete [] data;
                 }
         };
 
@@ -65,6 +77,12 @@ class Font_Manager
         virtual ~Font_Manager()
         {
         }
+
+        /**
+         * @brief Get the name of the font
+         * @return the name of the font
+         */
+        const virtual char* font_name();
 
         /**
          * @brief   Get the height of current selected font
@@ -83,7 +101,7 @@ class Font_Manager
          * @param   str         String to measure
          * @return  Width of the string
          */
-        virtual uint8_t measure_string( std::string str );
+        virtual uint16_t measure_string( std::string str );
 
         /**
          * @brief Bitmaps a string using the font
@@ -101,7 +119,10 @@ class Font_Manager
 
     private:
 
-        bitmap raster( unsigned char c, bitmap& scan );
+        void raster( unsigned char c, bitmap& scan );
+
+        // const uint8_t BITS [ 8 ] = { 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };    /// < Segment bit mask
+        const uint8_t MSBITS [ 8 ] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };    /// < Segment bit mask
 
         const font_info_t* m_font;    /// < Current font
         Raster m_raster;

@@ -24,6 +24,22 @@ Font_Manager::Font_Manager( uint8_t fontindex, Raster raster )
     m_raster = raster;
 }
 
+uint8_t Font_Manager::fontcount()
+{
+    return NUM_FONTS;
+}
+
+const char** Font_Manager::fontlist()
+{
+    static const char** fontlist = new const char* [ NUM_FONTS ];
+    for ( int i = 0; i < NUM_FONTS; i++ )
+    {
+        fontlist [ i ] = fonts [ i ]->name;
+        if ( fontlist [ i ] == NULL ) fontlist [ i ] = "** Font Name Missing **";
+    }
+    return fontlist;
+}
+
 const char* Font_Manager::font_name()
 {
     return ( m_font->name );
@@ -85,19 +101,20 @@ Font_Manager::bitmap Font_Manager::rasterize( unsigned char c )
 
 void Font_Manager::raster( unsigned char c, bitmap& bm )
 {
-    //  uint8_t fontsegments [ m_font->char_descriptors [ c ].width ] [ 1 + page_end - page_start ] = {};    // Col|Page L-R, T-B, fill with background
-
-    //   if ( ( c < m_font->char_start ) || ( c > m_font->char_end ) ) c = ' ';
     font_char_desc_t char_desc = m_font->char_descriptors [ c ];
     const uint8_t * bitmap = m_font->bitmap + char_desc.offset;                   // Pointer to L-R bitmap
     uint8_t horizontal_read_bytes = 1 + ( char_desc.width / 8 );            // Bytes to read for horizontal
-    uint8_t* data;                                      // Data byte placement
+    uint8_t* data;                                                      // Data byte placement
+    uint8_t lineoffset { 1 };
+    if ( bm.raster == TBLR ) lineoffset = 8;
     uint8_t shift = bm.xpoint % 8;                      // Number of bits to shift right on placement
+
     for ( uint8_t line = 0; line < m_font->height; line++ )
     {
-        data = bm.data + ( ( bm.width * ( line / 8 ) ) + bm.xpoint / 8 );    // address plus lines plus offset
-        printf( "\nLine:%d  Chunks:%d  FMDx:%p  Offset:0x%02x Char:0x%02x\n", line, horizontal_read_bytes, data,
-                ( ( bm.width * ( line / 8 ) ) + bm.xpoint / 8 ), char_desc.offset );
+        data = bm.data + ( ( bm.width * ( line / lineoffset ) ) + bm.xpoint / 8 );    // address plus lines plus offset
+
+        printf( "\nLine:%d  Chunks:%d  FMDx:%p  Offset:0x%02x Char:0x%02x  Shift:0x%02x\n", line, horizontal_read_bytes,
+                data, ( ( bm.width * ( line / lineoffset ) ) + bm.xpoint / 8 ), char_desc.offset, shift );
 
         for ( uint8_t chunk = 0; chunk < horizontal_read_bytes; chunk++ )
         /*
@@ -112,8 +129,16 @@ void Font_Manager::raster( unsigned char c, bitmap& bm )
                     /*
                      * Process the byte into the current location, across byte boundaries if needed
                      */
+                    printf( "LRTB Line:%d  Chunk:%d  Word:0x%02x  P:%p  Data:0x%02x  DataX:%02x", line, chunk, word,
+                            data, *data, *data | ( word >> shift ) );
                     *data++ |= ( word >> shift );                   // Font char MSBs shifted to end of destination byte
-                    if ( shift ) *data |= ( word << ( 8 - shift ) );    // Font char LSB shifted to start of next destination byte
+                    if ( shift )
+                    {
+                        printf( "  xP:%p  DataXX:%02x  ", data, *data );
+                        *data |= ( word << ( 8 - shift ) );    // Font char LSB shifted to start of next destination byte
+                        printf( "  DataXXX:%02x", *data );
+                    }
+                    printf( "\n" );
                     break;
 
                 case TBLR:
@@ -122,20 +147,18 @@ void Font_Manager::raster( unsigned char c, bitmap& bm )
                      */
                     uint8_t bitposition = line % 8;     // Vertical in the byte, little endian
                     for ( uint8_t seg = ( 8 * chunk );
-                            seg < std::min( static_cast< uint8_t >( chunk + 8 ), char_desc.width ); seg++ )
+                            seg <= std::min( static_cast< uint8_t >( ( chunk * 8 ) + 7 ), char_desc.width ); seg++ )
                     /*
-                     * Process bits in this horizontal byte, Font is Big-Endian, Segment is Little-Endian
+                     * Cycle through the bits in this horizontal byte, each goes to a different segment
+                     * Font is Big-Endian, Segment is Little-Endian
                      */
                     {
-                        if ( word & MSBITS [ seg ] )    // Font bit is set in this position
+                        if ( word & MSBITS [ seg % 8 ] )    // Font bit is set in this bit position
                         {
-                            uint8_t col = seg + ( chunk * bm.width );
-                            printf( "Line:0x%02x  Seg:0x%02x  Chunk:0x%02x  Col:0x%02x  BP:0x%02x  Data:0x%02x  ", line,
-                                    seg, chunk, col, bitposition, * ( data + col ) );
-
-                            * ( data + col )    // data segs along and chunk down
-                            |= ( 1 << bitposition );    // Set bit at bitposition
-                            printf( "DataX:%02x  P:%p\n", * ( data + col ), data + col );
+                            printf( "TBLR Line:%d  Chunk:%d  Seg:%02d  Word:0x%02x  BP:0x%02x  Data:0x%02x", line,
+                                    chunk, seg, word, bitposition, * ( data + seg ) );
+                            * ( data + seg ) |= ( 1 << bitposition );    // Set bit at bitposition
+                            printf( "  DataX:%02x  P:%p\n", * ( data + seg ), data + seg );
                         }
                     }
                     break;

@@ -19,9 +19,11 @@
 #ifndef INCLUDE_FONT_MANAGER_H_
 #define INCLUDE_FONT_MANAGER_H_
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <cstring>
 #include <string>
 
 #include "fonts.h"
@@ -63,7 +65,7 @@ class Font_Manager
                             break;
                     }
                     data = (uint8_t*) malloc( width * height );
-                    printf( "FMD:%p\n", data );
+                    memset( data, 0, width * height );
                 }
 
                 ~bitmap()
@@ -77,6 +79,18 @@ class Font_Manager
         virtual ~Font_Manager()
         {
         }
+
+        /**
+         * @brief The number of fonts available
+         * @return the number of fonts
+         */
+        static uint8_t fontcount();
+
+        /**
+         * @brief A list of the available fonts
+         * @return the font list
+         */
+        static const char** fontlist();
 
         /**
          * @brief Get the name of the font

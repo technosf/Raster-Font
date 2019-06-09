@@ -19,7 +19,6 @@
 #ifndef INCLUDE_FONT_MANAGER_H_
 #define INCLUDE_FONT_MANAGER_H_
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -28,39 +27,58 @@
 
 #include "fonts.h"
 
+/**
+ *
+ */
 class Font_Manager
 {
     public:
 
+        /**
+         *
+         */
         enum Raster
         {
             LRTB, TBLR,
         };
 
+        /**
+         *
+         */
         struct bitmap
         {
                 const Raster raster;
-                const uint16_t bitwidth;    // bits
-                const uint8_t bitheight;    // bits
+                uint16_t bitwidth;    // bits
+                uint8_t bitheight;    // bits
+
+                uint8_t widthoffset { 0 };    // bits
+                uint8_t heightoffset { 0 };    // bits
                 uint16_t width { 0 };       // bytes needed
                 uint16_t height { 0 };      // bytes needed
                 uint8_t * data { nullptr };
                 uint16_t xpoint { 0 };      // Current bit-point to place scan data
 
-                bitmap( Raster r, uint16_t w, uint8_t h ) :
-                        raster { r }, bitwidth { w }, bitheight { h }
+                bitmap( Raster r, uint16_t w, uint8_t h, uint16_t bitoffset ) :
+                        raster { r }, bitwidth { static_cast< uint16_t >( w - 1 ) }, bitheight { h }
                 {
                     switch ( raster )
                     /*
-                     * Calc width, height in Bytes
+                     * Calc width, height in Bytes, offsets for X,Y
                      */
+
                     {
                         case LRTB:
+                            widthoffset = bitoffset % 8;
+                            bitwidth += widthoffset;
                             width = ( ( bitwidth - 1 ) / 8 ) + 1;
                             height = bitheight;
+                            xpoint = widthoffset;
                             break;
+
                         case TBLR:
                             width = bitwidth;
+                            heightoffset = bitoffset % 8;
+                            bitheight += heightoffset;
                             height = ( ( bitheight - 1 ) / 8 ) + 1;
                             break;
                     }
@@ -74,6 +92,12 @@ class Font_Manager
                 }
         };
 
+        /**
+         * @brief Instantiates a Font_manager for the given font and raster orientation
+         *
+         * @param fontindex the font to produce
+         * @param raster The direction to rasterize the font
+         */
         Font_Manager( uint8_t fontindex, Raster raster );
 
         virtual ~Font_Manager()
@@ -118,24 +142,37 @@ class Font_Manager
         virtual uint16_t measure_string( std::string str );
 
         /**
-         * @brief Bitmaps a string using the font
+         * @brief Bitmaps a string using the font, shifting the bitmap as required.
+         *
+         * Raster the string using the font manager settings into a new bitmap structure.
+         * The string can be shifted along or down in the bitmap by up to 7 bits -
+         * the x or y shift is calculated from modulus 8 of the shift parameters, allowing
+         * absolute position to be used without prior calculation from the caller.
+         *
          * @param str String to bitmap
+         * @param bitoffset The number of bits to shift the bitmap
          * @return Bitmap of the string
          */
-        virtual bitmap rasterize( std::string str );
+        virtual bitmap rasterize( std::string str, uint16_t bitoffset = 0 );
 
         /**
+         * @brief Bitmaps a character using the font, shifting the bitmap as required.
          *
-         * @param c
-         * @return
+         * Raster the character using the font manager settings into a new bitmap structure.
+         * The character can be shifted along or down in the bitmap by up to 7 bits -
+         * the x or y shift is calculated from modulus 8 of the shift parameters, allowing
+         * absolute position to be used without prior calculation from the caller.
+         *
+         * @param c The character to bitmap
+         * @param bitoffset The number of bits to shift the bitmap
+         * @return Bitmap of the char
          */
-        virtual bitmap rasterize( unsigned char c );
+        virtual bitmap rasterize( unsigned char c, uint16_t bitoffset = 0 );
 
     private:
 
         void raster( unsigned char c, bitmap& scan );
 
-        // const uint8_t BITS [ 8 ] = { 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };    /// < Segment bit mask
         const uint8_t MSBITS [ 8 ] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };    /// < Segment bit mask
 
         const font_info_t* m_font;    /// < Current font

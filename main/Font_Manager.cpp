@@ -15,7 +15,7 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and limitations under the License.
  */
-#include <stdio.h>
+
 #include "Font_Manager.h"
 
 Font_Manager::Font_Manager( uint8_t fontindex, Raster raster )
@@ -100,7 +100,7 @@ void Font_Manager::raster( unsigned char c, bitmap& bm )
 {
     font_char_desc_t char_desc = m_font->char_descriptors [ c ];
     const uint8_t * bitmap = m_font->bitmap + char_desc.offset;                   // Pointer to L-R bitmap
-    uint8_t horizontal_read_bytes = 1 + ( char_desc.width / 8 );            // Bytes to read for horizontal
+    uint8_t horizontal_read_bytes = 1 + ( ( char_desc.width - 1 ) / 8 );            // Bytes to read for horizontal
     uint8_t* data;                                      // Data byte placement
     uint8_t linecoefficient { 1 };
     if ( bm.raster == TBLR ) linecoefficient = 8;          // For vertical raster, each line is 1/8th shift
@@ -111,32 +111,24 @@ void Font_Manager::raster( unsigned char c, bitmap& bm )
         uint16_t rowdataoffset = bm.width * ( ( line + bm.heightoffset ) / linecoefficient );
         data = bm.data + rowdataoffset + ( bm.xpoint / 8 );    // address plus lines plus offset
 
-//        printf( "\nLine:%d  Chunks:%d  FMDx:%p  Offset:0x%02x Char:0x%02x  Shift:0x%02x\n", line, horizontal_read_bytes,
-//                data, ( ( bm.width * ( line / linecoefficient ) ) + bm.xpoint / 8 ), char_desc.offset, shiftright );
-
         for ( uint8_t chunk = 0; chunk < horizontal_read_bytes; chunk++ )
         /*
          *  Read a horizontal slice of the current character, place it in the scan
          */
         {
             uint8_t word = *bitmap++;    // Read the next byte
-            //    printf( " -> 1Byte:0x%02x\n", word );
+
             switch ( bm.raster )
             {
                 case LRTB:
                     /*
                      * Process the byte into the current location, across byte boundaries if needed
                      */
-//                    printf( "LRTB Line:%d  Chunk:%d  Word:0x%02x  P:%p  Data:0x%02x  DataX:%02x", line, chunk, word,
-//                            data, *data, *data | ( word >> shiftright ) );
                     *data++ |= ( word >> shiftright );      // Font char MSBs shifted to end of destination byte
                     if ( shiftright )
                     {
-                        //   printf( "  xP:%p  DataXX:%02x  ", data, *data );
                         *data |= ( word << ( 8 - shiftright ) );    // Font char LSB shifted to start of next destination byte
-                        //   printf( "  DataXXX:%02x", *data );
                     }
-                    //  printf( "\n" );
                     break;
 
                 case TBLR:

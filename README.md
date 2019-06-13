@@ -1,6 +1,7 @@
 # Raster-Font
 
-C library that produces font characters in bitmaps that scan horizontally or vertically. Fonts are embeded as header files, and individual characters are delivered in the desired raster pattern. Developed on Espressif ESP-IDF toolchain.
+C library that produces font characters in bitmaps that scan horizontally or vertically. Fonts are embeded as header files, and individual characters are delivered in the desired raster pattern. 
+Developed on Espressif ESP-IDF toolchain, debugged seperately on Eclipse CDT.
 
 
 ## Fonts
@@ -29,11 +30,22 @@ C library that produces font characters in bitmaps that scan horizontally or ver
 |19 | terminus bold |16x32 |iso8859 1|
 
 
+## Features
+
+* Left-Right Top-Bottom rasterization
+* Top-Bottom Left-Right rasterization (on the fly)
+* Position offset - can shift the bitmap in the byte data along the rasterization axis 
+
+The original fonts are _Left-Right Top-Bottom_ scanned, but on-the-fly _Top-Bottom Left-Right_ rasterization is provided to allow paged type bitmapps to be supported directly in-library.
+
+The position offset moved the bitmap along the major raster axis so that the output can be directly ORed with the destination bitmap with out the need to calculate any required shift at the byte-boundary in the implementing app. For example, in paged display bitmap such as that in the SD1306, to rasterize a 5-bit high character at Y 21 means the character crosses a page boundry, starting in page 2 (21/8) and ending in page 3 (26/8). Using 21 as the offset the resulting bitmap is split into two rows that can be ORed directly into Page 2 and Page 3.
+
+
 ## Architecture and Operation
 
-The library contain two parts - the font manager and the codified fonts. The fonts themselves are codified as C Header files containing arrays of bitmapped character byte data scanning _left-right_, _top-bottom_.
+The library contains two parts - the font manager, which is an instance of a given font and raster orientation, and the codified fonts. The fonts themselves are codified as individual C Header files containing arrays of bitmapped character byte data scanning _left-right_, _top-bottom_.
 
-The font manager contains a fixed index of the available fonts and retrieves the character data for a particular font by calling a routing in that font header. The font amanager can then transform the _L-R/T-B_ rasterization of the charater to someother rasterization as needed: In the case of my [SSD1306 driver](https://github.com/technosf/ESP32-SSD1306-Driver), it wants _T-B/L-R_ rasterized fonts to allow the SSD1306 paged memory to be written to more effectively as it's also organized _T-B/L-R_.
+The font manager contains a fixed index of the available fonts and retrieves the character data for a particular font by calling a routing in that fonts' header. The font manager can then transform the _L-R/T-B_ rasterization of the charater to some other rasterization as needed: In the case of my [SSD1306 driver](https://github.com/technosf/ESP32-SSD1306-Driver), it wants _T-B/L-R_ rasterized fonts to allow the SSD1306 paged memory to be written to more effectively as it's also organized _T-B/L-R_.
 
 This is not a _dynamic_ library, in that it doesn't read the available fonts and index them automagically - to make a font available it has to be scanned, codified and coded into the index. One point to note is that some of the fonts processed for Baoshi's code have character indexes that are 1-out because of C arrays are index from _zero_ and the first non-null character is _one_: The fist *font_char_desc_t* entries should be a dummy to compensate to allow a direct character-number to character-representation mapping.
   
@@ -45,6 +57,7 @@ Thinking about what could be added:
 
 ##  Versions
 
+* _1.0.0_	First release with 20 fonts, verticle and horizontal rasterization, position offset
 * _0.1.0_	Initial commit and pre-release
 
 

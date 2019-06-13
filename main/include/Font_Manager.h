@@ -28,14 +28,15 @@
 #include "fonts.h"
 
 /**
- *
+ * @class Font_Manager
+ * @brief Class that manages an instance of a single font scanning in one orientation
  */
 class Font_Manager
 {
     public:
 
         /**
-         *
+         * @enum Raster Left-Right-Top-Bottom or Top-Bottom-Left-Right
          */
         enum Raster
         {
@@ -43,7 +44,7 @@ class Font_Manager
         };
 
         /**
-         *
+         * @struct bitmap holds data used to produce a given string
          */
         struct bitmap
         {
@@ -58,7 +59,7 @@ class Font_Manager
                 uint8_t * data { nullptr };
                 uint16_t xpoint { 0 };      // Current bit-point to place scan data
 
-                bitmap( Raster r, uint16_t w, uint8_t h, uint16_t bitoffset ) :
+                bitmap( Raster r, uint16_t w, uint8_t h, uint16_t offset ) :
                         raster { r }, bitwidth { static_cast< uint16_t >( w - 1 ) }, bitheight { h }
                 {
                     switch ( raster )
@@ -68,7 +69,7 @@ class Font_Manager
 
                     {
                         case LRTB:
-                            widthoffset = bitoffset % 8;
+                            widthoffset = offset % 8;
                             bitwidth += widthoffset;
                             width = ( ( bitwidth - 1 ) / 8 ) + 1;
                             height = bitheight;
@@ -77,7 +78,7 @@ class Font_Manager
 
                         case TBLR:
                             width = bitwidth;
-                            heightoffset = bitoffset % 8;
+                            heightoffset = offset % 8;
                             bitheight += heightoffset;
                             height = ( ( bitheight - 1 ) / 8 ) + 1;
                             break;
@@ -150,10 +151,10 @@ class Font_Manager
          * absolute position to be used without prior calculation from the caller.
          *
          * @param str String to bitmap
-         * @param bitoffset The number of bits to shift the bitmap
+         * @param offset The number of points (bits) to shift the bitmap along the major axis
          * @return Bitmap of the string
          */
-        virtual bitmap rasterize( std::string str, uint16_t bitoffset = 0 );
+        virtual bitmap rasterize( std::string str, uint16_t offset = 0 );
 
         /**
          * @brief Bitmaps a character using the font, shifting the bitmap as required.
@@ -164,10 +165,10 @@ class Font_Manager
          * absolute position to be used without prior calculation from the caller.
          *
          * @param c The character to bitmap
-         * @param bitoffset The number of bits to shift the bitmap
+         * @param offset The number of points (bits) to shift the bitmap along the major axis
          * @return Bitmap of the char
          */
-        virtual bitmap rasterize( unsigned char c, uint16_t bitoffset = 0 );
+        virtual bitmap rasterize( unsigned char c, uint16_t offset = 0 );
 
     private:
 
@@ -175,8 +176,8 @@ class Font_Manager
 
         const uint8_t MSBITS [ 8 ] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };    /// < Segment bit mask
 
-        const font_info_t* m_font;    /// < Current font
-        Raster m_raster;
+        const Raster m_raster;      /// < This raster
+        const font_info_t* m_font;    /// < This font
 };
 
 #endif /* INCLUDE_FONT_MANAGER_H_ */

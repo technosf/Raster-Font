@@ -18,10 +18,10 @@
 
 #include "Font_Manager.h"
 
-Font_Manager::Font_Manager( uint8_t fontindex, Raster raster )
+Font_Manager::Font_Manager( uint8_t fontindex, Raster raster ) : m_raster { raster}
 {
     m_font = fonts [ fontindex ];    // Err out if out of bounds
-    m_raster = raster;
+   // m_raster = raster;
 }
 
 uint8_t Font_Manager::fontcount()
@@ -75,9 +75,9 @@ uint16_t Font_Manager::measure_string( std::string str )
     return w;
 }
 
-Font_Manager::bitmap Font_Manager::rasterize( std::string str, uint16_t bitoffset )
+Font_Manager::bitmap Font_Manager::rasterize( std::string str, uint16_t offset )
 {
-    bitmap scan( m_raster, measure_string( str ), m_font->height, bitoffset );
+    bitmap scan( m_raster, measure_string( str ), m_font->height, offset );
 
     for ( char& c : str )
     {
@@ -87,11 +87,11 @@ Font_Manager::bitmap Font_Manager::rasterize( std::string str, uint16_t bitoffse
     return scan;
 }
 
-Font_Manager::bitmap Font_Manager::rasterize( unsigned char c, uint16_t bitoffset )
+Font_Manager::bitmap Font_Manager::rasterize( unsigned char c, uint16_t offset )
 {
     if ( ( c < m_font->char_start ) || ( c > m_font->char_end ) ) c = ' ';
 
-    bitmap scan( m_raster, m_font->char_descriptors [ c ].width, m_font->height, bitoffset );
+    bitmap scan( m_raster, m_font->char_descriptors [ c ].width, m_font->height, offset );
     raster( c, scan );
     return scan;
 }

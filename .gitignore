@@ -218,3 +218,4 @@ pip-log.txt
 
 doc/*.docx
 /sdkconfig
+/sdkconfig.old

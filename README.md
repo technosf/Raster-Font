@@ -38,7 +38,7 @@ Developed on Espressif ESP-IDF toolchain, debugged seperately on Eclipse CDT.
 
 The original fonts are _Left-Right Top-Bottom_ scanned, but on-the-fly _Top-Bottom Left-Right_ rasterization is provided to allow paged type bitmapps to be supported directly in-library.
 
-The position offset moved the bitmap along the major raster axis so that the output can be directly ORed with the destination bitmap with out the need to calculate any required shift at the byte-boundary in the implementing app. For example, in paged display bitmap such as that in the SD1306, to rasterize a 5-bit high character at Y 21 means the character crosses a page boundry, starting in page 2 (21/8) and ending in page 3 (26/8). Using 21 as the offset the resulting bitmap is split into two rows that can be ORed directly into Page 2 and Page 3.
+The position offset moved the bitmap along the major raster axis so that the output can be directly ORed with the destination bitmap without the need to calculate any required shift at the byte-boundary by the implementing app. 
 
 
 ## Architecture and Operation
@@ -48,7 +48,54 @@ The library contains two parts - the font manager, which is an instance of a giv
 The font manager contains a fixed index of the available fonts and retrieves the character data for a particular font by calling a routing in that fonts' header. The font manager can then transform the _L-R/T-B_ rasterization of the charater to some other rasterization as needed: In the case of my [SSD1306 driver](https://github.com/technosf/ESP32-SSD1306-Driver), it wants _T-B/L-R_ rasterized fonts to allow the SSD1306 paged memory to be written to more effectively as it's also organized _T-B/L-R_.
 
 This is not a _dynamic_ library, in that it doesn't read the available fonts and index them automagically - to make a font available it has to be scanned, codified and coded into the index. One point to note is that some of the fonts processed for Baoshi's code have character indexes that are 1-out because of C arrays are index from _zero_ and the first non-null character is _one_: The fist *font_char_desc_t* entries should be a dummy to compensate to allow a direct character-number to character-representation mapping.
-  
+
+### Example
+
+In paged display bitmap such as that in the SD1306, to rasterize a 5-bit high character at Y 21 means the character crosses a page boundry, starting in page 2 (21/8) and ending in page 3 (26/8). Using 21 as the offset the resulting bitmap is split into two rows that can be ORed directly into Page 2 and Page 3.
+
+
+```
+   /*
+    * Create a font manager for glcd_5x7 to raster to an 
+    * SSD1306 driving a 128x64 oled
+    */
+   Font_Manager fm( 3, Font_Manager::TBLR );    
+    
+   uint8_t x = 40;
+   uint8_t y = 21;
+   uint8_t page = y / 8;
+   std::string s = "@test";
+   
+   
+
+   
+   /*
+    * Raster an ampersand at the major raster axis (Y for TBLR) position y
+    * and grab the bitmap data
+    */
+   Font_Manager::bitmap b = fm.rasterize( s,  y ); 
+   uint8_t * d = b.data; 
+
+	for ( yy = page; i < ( page + b.height ); i++ )
+	/*
+	 * For each page
+	 */
+    {
+       uint8_t * oled = getOledAtCoord( x, yy * 8 );  // Oled memory buffer address at x, paged y
+       
+        for ( int xx = x; j < (x + b.width ); j++ )
+        /*
+         * for each column, OR the bit map into the oled buffer
+         */
+        {
+            *oled++ |= *d++;
+        }
+    }
+ 
+```
+
+Integration and use can be seen in [ESP32-SSD1306-Driver](https://github.com/technosf/ESP32-SSD1306-Driver)
+
 
 ## Future Features
 

@@ -37,7 +37,6 @@ void raster( char c, Font_Manager& fm, uint8_t o )
             printf( "0x%02x ", *d );
             d++;
         }
-        //printf( "\n" );
     }
     printf( "\n" );
 

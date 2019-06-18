@@ -6,29 +6,39 @@ Developed on Espressif ESP-IDF toolchain, debugged seperately on Eclipse CDT.
 
 ## Fonts
 
-| Num | Description | Size | Norm |
-|-----|-------------|------|------|
-|0 | bitocra |4x7 |ascii|
-|1 | bitocra |6x11 |iso8859 1|
-|2 | bitocra |7x13 |iso8859 1|
-|3 | glcd |5x7|
-|4 | roboto |8pt|
-|5 | roboto |10pt|
-|6 | tahoma |10x11 |
-|7 | terminus |6x12 |iso8859 1|
-|8 | terminus |8x14 |iso8859 1|
-|9 | terminus |10x18 |iso8859 1|
-|10 | terminus |11x22 |iso8859 1|
-|11 | terminus |12x24 |iso8859 1|
-|12 | terminus |14x28 |iso8859 1|
-|13 | terminus |16x32 |iso8859 1|
-|14 | terminus bold |8x14 |iso8859 1|
-|15 | terminus bold |10x18 |iso8859 1|
-|16 | terminus bold |11x22 |iso8859 1|
-|17 | terminus bold |12x24 |iso8859 1|
-|18 | terminus bold |14x28 |iso8859 1|
-|19 | terminus bold |16x32 |iso8859 1|
+The fonts are grouped by character set, with the custom _GLCD5x7_ font always included and first.
 
+The character sets to be compiled into the library are defined in _fonts.h_. Depending on the active charactersets, the index of a particular font may change. If all are chosen, these are the available fonts:
+
+| Num | Description | Size | Char Set |
+|-----|-------------|------|----------|
+|0|	glcd_5x7|5x7|
+|1|	bitocra_4x7_ascii|4x7|ascii|
+|2|	roboto_8pt_ascii|8x11|ascii|
+|3|	roboto_10pt_ascii|11x14|ascii|
+|4|	tahoma_8pt_ascii|10x11|ascii|
+|5|	bitocra_6x11_iso8859_1|6x11|iso8859_1|
+|6|	bitocra_7x13_iso8859_1|7x13|iso8859_1|
+|7|	terminus_6x12_iso8859_1|6x12|iso8859_1|
+|8|	terminus_8x14_iso8859_1|8x14|iso8859_1|
+|9|	terminus_10x18_iso8859_1|10x18|iso8859_1|
+|10|	terminus_11x22_iso8859_1|11x22|iso8859_1|
+|11|	terminus_12x24_iso8859_1|12x24|iso8859_1|
+|12|	terminus_14x28_iso8859_1|14x28|iso8859_1|
+|13|	terminus_16x32_iso8859_1|16x32|iso8859_1|
+|14|	terminus_bold_8x14_iso8859_1|8x14|iso8859_1|
+|15|	terminus_bold_10x18_iso8859_1|10x18|iso8859_1|
+|16|	terminus_bold_11x22_iso8859_1|11x22|iso8859_1|
+|17|	terminus_bold_12x24_iso8859_1|12x24|iso8859_1|
+|18|	terminus_bold_14x28_iso8859_1|14x28|iso8859_1|
+|19|	terminus_bold_16x32_iso8859_1|16x32|iso8859_1|
+|20|	terminus_6x12_koi8_r|6x12|koi8_r|
+|21|	terminus_8x14_koi8_r|8x14|koi8_r|
+|22|	terminus_14x28_koi8_r|14x28|koi8_r|
+|23|	terminus_16x32_koi8_r|16x32|koi8_r|
+|24|	terminus_bold_8x14_koi8_r|8x14|koi8_r|
+|25|	terminus_bold_14x28_koi8_r|14x28|koi8_r|
+|26|	terminus_bold_16x32_koi8_r|16x32|koi8_r|
 
 ## Features
 
@@ -65,8 +75,6 @@ In paged display bitmap such as that in the SD1306, to rasterize a 5-bit high ch
    uint8_t y = 21;
    uint8_t page = y / 8;
    std::string s = "@test";
-   
-   
 
    
    /*
@@ -91,7 +99,6 @@ In paged display bitmap such as that in the SD1306, to rasterize a 5-bit high ch
             *oled++ |= *d++;
         }
     }
- 
 ```
 
 Integration and use can be seen in [ESP32-SSD1306-Driver](https://github.com/technosf/ESP32-SSD1306-Driver)
@@ -104,7 +111,7 @@ Thinking about what could be added:
 
 ##  Versions
 
-* _1.0.0_	First release with 20 fonts, verticle and horizontal rasterization, position offset
+* _1.0.0_	First release with 27 fonts, verticle and horizontal rasterization, position offset
 * _0.1.0_	Initial commit and pre-release
 
 
@@ -113,7 +120,6 @@ Thinking about what could be added:
 This repo is a fork of [Baoshi's ESP-I2C-OLED repo](https://github.com/baoshi/ESP-I2C-OLED), discarding the i2C/SSD1306 code, and developing _font management_ code only. This move came from work on my own [SSD1306 driver fork](https://github.com/technosf/ESP32-SSD1306-Driver), but in organizing the font usage to better integrate with the bitmapped memory architecture of the SSD1306 I decide to just break this out into a seperate repo for re-use.
 
 Looking through the various forks of the SSD1306 and similar drivers, you find plenty of font bitmaps you can you, such as the set from [ubirch](https://github.com/ubirch/esp32-i2c-ssd1306-oled) I've also borrowed here.
-
 
 ## License
 

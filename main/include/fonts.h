@@ -24,6 +24,7 @@
 #ifndef FONTS_H
 #define FONTS_H
 
+// Font families
 #define FONTS_ASCII 4
 #define FONTS_ISO8859 15
 #define FONTS_KOI8 7
@@ -33,7 +34,7 @@
 
 #include <stdint.h>
 
-//! @brief Character descriptor
+//!< @brief Character descriptor
 typedef struct _font_char_desc
 {
         uint8_t width;      //!< Character width in pixel
@@ -48,7 +49,7 @@ typedef struct _font_info
         uint8_t c;              //!< Simulation of "C" width in TrueType term, the space between adjacent characters
         unsigned char char_start;        //!< First character
         unsigned char char_end;          //!< Last character
-        const font_char_desc_t* char_descriptors;    //! descriptor for each character
+        const font_char_desc_t* char_descriptors;    //!< descriptor for each character
         const uint8_t *bitmap;    //!< Character bitmap
 } font_info_t;
 

@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <graphics.h>
 
 #include "Font_Manager.h"
 

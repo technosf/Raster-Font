@@ -222,4 +222,5 @@ doc/*.docx
 /sdkconfig
 /sdkconfig.old
 /partitions.csv
+CMakeFiles/
 

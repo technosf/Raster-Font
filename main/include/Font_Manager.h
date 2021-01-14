@@ -59,33 +59,36 @@ public:
     };
 
     /**
-     * @brief 
+     * @brief Rasterized text and configuration info
      * 
+     * Container for rasterized text and information on 
+     * how it was rasterized and how to map the data to the display.
+     * Data is contained within a byte array of size xbytes*ybytes
      */
     struct bitmap
     {
-       // const Raster raster;
-        uint16_t bitwidth; // bits
-        uint8_t bitheight; // bits
-
-        uint8_t widthoffset{0};  // bits
-        uint8_t heightoffset{0}; // bits
-        uint16_t width{0};       // bytes needed
-        uint16_t height{0};      // bytes needed
-        uint16_t xpoint{0};      // Current bit-point to place scan data
-        uint8_t *data{nullptr};
+        Raster raster;               ///< Rasterization
+        Orientation orientation;     ///< Text orientation
+        uint16_t bitwidth;           ///< Width in bits for the rasterized data
+        uint8_t bitheight;           ///< Hieght in bits for the rasterized data
+        uint8_t widthoffsetbits{0};  ///< bits the raster data is offset to the side
+        uint8_t heightoffsetbits{0}; ///< bits the raster data is offset from the top
+        uint16_t xbytes{0};          ///< X-width of the rasterized data in bytes
+        uint16_t ybytes{0};          ///< Y-height of the rasterized data in bytes
+        uint16_t xpoint{0};          ///< Current bit-point to place scan data
+        uint8_t *data{nullptr};      ///< The rasterized string
 
         /**
          * @brief Construct a new output bitmap object
          * 
          * @param r how to rasterize the bitmap
-         * @param r how to rasterize the bitmap
+         * @param o how to orientate the characters
          * 
          * @param w width in bits
          * @param h height in bits
          * @param bitoffset offset in bits
          */
-        bitmap(Raster r, Orientation o, uint16_t w, uint8_t h, uint16_t bitoffset) : raster{r}, bitwidth{w}, bitheight{h}
+        bitmap(Raster r, Orientation o, uint16_t w, uint8_t h, uint16_t bitoffset) : raster{r}, orientation{o}, bitwidth{w}, bitheight{h}
         {
             switch (raster)
             /*
@@ -131,9 +134,9 @@ public:
     bitmap rasterize(unsigned char c, uint16_t bitoffset = 0);
 
 private:
-    const font_info_t *m_font; ///< The font managed by this object
-    const Raster m_raster;     ///< Raster direction
-    const Orientation orientation; ///< Character orientation
+    const font_info_t *m_font;       ///< The font managed by this object
+    const Raster m_raster;           ///< Raster direction
+    const Orientation m_orientation; ///< Character orientation
 
     void raster(unsigned char c, bitmap &scan);
 };

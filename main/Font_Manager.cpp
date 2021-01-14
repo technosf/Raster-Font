@@ -26,7 +26,7 @@ static const uint8_t MSBITS[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
  * @param fontindex the font to produce
  * @param raster The direction to rasterize the font
  */
-Font_Manager::Font_Manager(uint8_t fontindex, Raster raster) : m_raster{raster}
+Font_Manager::Font_Manager(uint8_t fontindex, Raster raster, Orientation orientation) : m_raster{raster}, m_orientation{orientation}
 {
     m_font = fonts[fontindex]; // Err out if out of bounds
 }

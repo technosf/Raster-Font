@@ -16,8 +16,8 @@
  See the License for the specific language governing permissions and limitations under the License.
  */
 
-#include <stdio.h>
 #include <graphics.h>
+#include <stdio.h>
 
 #include "Font_Manager.h"
 
@@ -31,9 +31,9 @@ void raster( char c, Font_Manager& fm, uint8_t o )
 
     uint8_t * d = x.data;
 
-    for ( int i = 0; i < x.height; i++ )
+    for ( int i = 0; i < x.ybytes; i++ )
     {
-        for ( int j = 0; j < x.width; j++ )
+        for ( int j = 0; j < x.xbytes; j++ )
         {
             printf( "0x%02x ", *d );
             d++;

@@ -96,20 +96,20 @@ public:
                      */
             {
             case LRTB:
-                widthoffset = bitoffset % 8;
-                bitwidth += widthoffset;
-                width = ((bitwidth - 1) / 8) + 1;
-                height = bitheight;   // Bytes
-                xpoint = widthoffset; // Bytes
+                widthoffsetbits = bitoffset % 8;
+                bitwidth += widthoffsetbits;
+                xbytes = ((bitwidth - 1) / 8) + 1;
+                ybytes = bitheight;   // Bytes
+                xpoint = widthoffsetbits; // Bytes
                 break;
             case TBLR:
-                heightoffset = bitoffset % 8;
-                bitheight += heightoffset;
-                width = bitwidth;                   // Bytes
-                height = ((bitheight - 1) / 8) + 1; // Bytes
+                heightoffsetbits = bitoffset % 8;
+                bitheight += heightoffsetbits;
+                xbytes = bitwidth;                   // Bytes
+                ybytes = ((bitheight - 1) / 8) + 1; // Bytes
                 break;
             }
-            data = (uint8_t *)calloc(width, height);
+            data = (uint8_t *)calloc(xbytes, ybytes);
         }
 
         ~bitmap()

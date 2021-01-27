@@ -19,21 +19,21 @@
 #include <graphics.h>
 #include <stdio.h>
 
-#include "Font_Manager.h"
+#include "FontManager.h"
 
 extern "C" int main();
 
-void raster(char c, Font_Manager &fm, uint8_t o)
+void raster(char c, FontManager &fm, uint8_t o)
 {
-    printf("\nFont:%s  Char:0x%03x  Offset:%d\n", fm.font_name(), c, o);
+    printf("\nFont:%s  Char:0x%03x  Offset:%d\n", fm.FontName(), c, o);
 
-    Font_Manager::bitmap x = fm.rasterize(c, o);
+    FontManager::Bitmap b = fm.Rasterize(c, o);
 
-    uint8_t *d = x.data;
+    uint8_t *d = b.data;
 
-    for (int i = 0; i < x.ybytes; i++)
+    for (int i = 0; i < b.bytes_per_column; i++)
     {
-        for (int j = 0; j < x.xbytes; j++)
+        for (int j = 0; j < b.bytes_per_row; j++)
         {
             printf("0x%02x ", *d);
             d++;
@@ -48,19 +48,19 @@ int main()
      * List the fonts and indices
      */
     printf("Font List\n");
-    const char **fontlist = Font_Manager::fontlist();
-    for (int i = 0; i < Font_Manager::fontcount(); i++)
+    const char **fontlist = FontManager::FontList();
+    for (int i = 0; i < FontManager::FontCount(); i++)
     {
         printf("%d\t%s\n", i, fontlist[i]);
     }
     printf("\n\n");
 
-    Font_Manager fm3LRTB(3, Font_Manager::LRTB);   // glcd_5x7
-    Font_Manager fm3TBLR(3, Font_Manager::TBLR);   // glcd_5x7
-    Font_Manager fm9LRTB(9, Font_Manager::LRTB);   // terminus_10x18_iso8859_1
-    Font_Manager fm9TBLR(9, Font_Manager::TBLR);   // terminus_10x18_iso8859_1
-    Font_Manager fm13LRTB(13, Font_Manager::LRTB); // terminus_16x32_iso8859_1
-    Font_Manager fm13TBLR(13, Font_Manager::TBLR); // terminus_16x32_iso8859_1
+    FontManager fm3LRTB(3, FontManager::LRTB);   // glcd_5x7
+    FontManager fm3TBLR(3, FontManager::PTBLR);   // glcd_5x7
+    FontManager fm9LRTB(9, FontManager::LRTB);   // terminus_10x18_iso8859_1
+    FontManager fm9TBLR(9, FontManager::PTBLR);   // terminus_10x18_iso8859_1
+    FontManager fm13LRTB(13, FontManager::LRTB); // terminus_16x32_iso8859_1
+    FontManager fm13TBLR(13, FontManager::PTBLR); // terminus_16x32_iso8859_1
 
     raster('|', fm3LRTB, 0); // glcd_5x7 : 0x20 0x20 0x20 0x00 0x20 0x20 0x20
     raster('|', fm3LRTB, 1); // glcd_5x7 : 0x10 0x10 0x10 0x00 0x10 0x10 0x10

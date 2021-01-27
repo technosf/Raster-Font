@@ -1,5 +1,4 @@
 idf_component_register(SRCS 
-							"app_main.cpp" 
 							"Font_Manager.cpp" 
                             "fonts.c"
                     INCLUDE_DIRS 

@@ -5,15 +5,16 @@ cmake_minimum_required(VERSION 3.5)
 
 project(Raster-Font C CXX)
 
-add_executable(Raster-Font main/app_main.cpp)
+set(SOURCES
+    main/FontManager.cpp 
+    main/fonts.c
+)
 
-include_directories(main/include main/fonts)
+include_directories(main/fonts main/include)
+
+add_executable(Raster-Font main.cpp ${SOURCES})
 
 find_library(graph libgraph)
-#add_library(graph SHARED IMPORTED) # or STATIC instead of SHARED
-
-#target_link_libraries(graph INTERFACE "/usr/lib/libgraph.so")
-
 
 target_link_libraries(Raster-Font graph)
 
